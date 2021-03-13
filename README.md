@@ -24,6 +24,7 @@ Please dont forget to do a proper backup to a different site (geo redundant), in
 * Recycle bin instead always reporting that a file will be deleted soon.
 * Instead of config variables use Powershell like parameters (eg: -Retentiondays 180 -Sources X:\Test,D:\Folder)
 * Add different languages (german, english, ..?)
+* Add reporting to Windows Eventlog additional to text logfile
 
 -------------------
 
