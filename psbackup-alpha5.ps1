@@ -35,11 +35,15 @@ Recycle bin instead always reporting that a file will be deleted soon.
 #General Information
 Try{
     #< Configuration - should be changed
+    $global:Configedited = $false #please change this after you completed your configuration
+    if($global:Configedited -eq $false){
+       Throw "Configuration file not edited, please edit before first run!" 
+    }
     $global:FileRetentionDays = 180 #will keep deleted files in destination until retention is expired
     $global:Algorithm = "SHA256" #algorithm used to generate hash
     $global:FreeSpaceLimitGB = 150 #free space in GB until next backup destination is used (checked after each file)
-    $Sources = @("G:\Mycloud","E:\4TB Seagate","E:\4TB USB HDD","F:\2TB USB HDD","F:\5TB USB HDD","F:\Dario\Roms") #source array consisting of strings to all source folders (without ending \)
-    $Destinations = @("U:\PS-Backup","V:\PS-Backup","W:\PS-Backup","Y:\PS-Backup","X:\PS-Backup") #destination arrray consisting of string to all destination folders (without ending \)
+    $Sources = @("G:\Movies") #source array consisting of strings to all source folders (without ending \)
+    $Destinations = @("X:\PSback") #destination arrray consisting of string to all destination folders (without ending \)
     #$Destinations = @("W:\PS-Backup")
     $global:HashExpireDays = 60
     $global:LogDir= "\log" #where should the log be saved whithing ProgramData Folder specified below.
