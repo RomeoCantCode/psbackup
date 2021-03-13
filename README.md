@@ -22,3 +22,10 @@ Please dont forget to do a proper backup to a different site (geo redundant), in
 * More efficiency: change += with .add / .remove / convert array to collections https://www.jonathanmedd.net/2014/01/adding-and-removing-items-from-a-powershell-array.html
 * Backup: Check if file fits to target disk before backup instead of just checking if disk limit is reached.
 * Recycle bin instead always reporting that a file will be deleted soon.
+* Instead of config variables use Powershell like parameters (eg: -Retentiondays 180 -Sources X:\Test,D:\Folder)
+* Add different languages (german, english, ..?)
+
+-------------------
+
+# Installation / first use
+As for 0.0.1 you need to edit this script starting at line #37 to make it work.
