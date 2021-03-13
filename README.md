@@ -10,6 +10,7 @@ Not recommended for: a lot of files (>1M), a lot of tiny files or folders with a
 Please dont forget to do a proper backup to a different site (geo redundant), in case of fire/water/atomic war?/... 
 
 -------------------
+
 # Future goals / changes
 
 * Add property to file object "backupflag" which will be set to 0 whenever a file copy is started and set to 1 when file copy is over. When the file copy gets interrupted, it causes the files to get corrupt (you cant see any difference in file explorer).
@@ -22,7 +23,8 @@ Please dont forget to do a proper backup to a different site (geo redundant), in
 * More efficiency: change += with .add / .remove / convert array to collections https://www.jonathanmedd.net/2014/01/adding-and-removing-items-from-a-powershell-array.html
 * Backup: Check if file fits to target disk before backup instead of just checking if disk limit is reached.
 * Recycle bin instead always reporting that a file will be deleted soon.
-* Instead of config variables use Powershell like parameters (eg: -Retentiondays 180 -Sources X:\Test,D:\Folder)
+* Instead of config variables use Powershell like parameters whre it does make sense (eg: -Retentiondays 180 -Sources X:\Test,D:\Folder)
+* Use seperate config file
 * Add different languages (german, english, ..?)
 * Add reporting to Windows Eventlog additional to text logfile
 
