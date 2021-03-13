@@ -10,15 +10,15 @@ Not recommended for: a lot of files (>1M), a lot of tiny files or folders with a
 Please dont forget to do a proper backup to a different site (geo redundant), in case of fire/water/atomic war?/... 
 
 -------------------
-Future goals / changes
+# Future goals / changes
 
--Add property to file object "backupflag" which will be set to 0 whenever a file copy is started and set to 1 when file copy is over. When the file copy gets interrupted, it causes the files to get corrupt (you cant see any difference in file explorer).
--Cleanup Summary: DST Orphan Files / PSBak, 
--Add report to manually check about deleted files (retention is OK but you might not notice after a long period of time).
--Add multithreading for better cpu usage https://adamtheautomator.com/powershell-multithreading/
--MT goals: copy to different destinations / from different sources at same time. Calculate hashes at same time. get-childitem from differente src/dst at same time.
--MT: add options for I/O Multithread (per disk, ?) and CPU Multithread 
--Global excludefiles tbd
--More efficiency: change += with .add / .remove / convert array to collections https://www.jonathanmedd.net/2014/01/adding-and-removing-items-from-a-powershell-array.html
--Backup: Check if file fits to target disk before backup instead of just checking if disk limit is reached.
--Recycle bin instead always reporting that a file will be deleted soon.
+* Add property to file object "backupflag" which will be set to 0 whenever a file copy is started and set to 1 when file copy is over. When the file copy gets interrupted, it causes the files to get corrupt (you cant see any difference in file explorer).
+* Cleanup Summary: DST Orphan Files / PSBak, 
+* Add report to manually check about deleted files (retention is OK but you might not notice after a long period of time).
+* Add multithreading for better cpu usage https://adamtheautomator.com/powershell-multithreading/
+* MT goals: copy to different destinations / from different sources at same time. Calculate hashes at same time. get-childitem from differente src/dst at same time.
+* MT: add options for I/O Multithread (per disk, ?) and CPU Multithread 
+* Global excludefiles tbd
+* More efficiency: change += with .add / .remove / convert array to collections https://www.jonathanmedd.net/2014/01/adding-and-removing-items-from-a-powershell-array.html
+* Backup: Check if file fits to target disk before backup instead of just checking if disk limit is reached.
+* Recycle bin instead always reporting that a file will be deleted soon.
