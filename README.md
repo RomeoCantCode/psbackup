@@ -1,3 +1,8 @@
+# Branch Info
+This branch is the current script Romeo is using with his configuration which he regularly updates and works on.
+
+---------------
+
 # psbackup
 Decentralized backup from different sources to different destinations
 
