@@ -48,8 +48,8 @@ Try{
     $global:HashExpireDays = 60
     $global:LogDir= "\log" #where should the log be saved whithing ProgramData Folder specified below.
     $global:ProcessPriority = "Idle" #Idle, Normal, BelowNormal, AboveNormal, Realtime, High. Default: Idle so the system wont be slowed down when calculating hashes.
-    $global:MaxRunTime = 4 #TBD maximum run time in hours. after that time it will complete the current step and then exit.
-    $global:AllowFileDeletion = $false #$true or $false
+    $global:MaxRunTimeMin = 4 #TBD maximum run time in minutes. after that time it will complete the current step and then exit.
+    $global:AllowFileDeletion = $false #$true or $false / will keep files forever if set to $false, recommended set to $false until stable release
     $global:MaxThreads = 4 #TBD
     $global:ExcludeFiles = @() #TBD array of strings which exlude files. Example: @("*.txt","*.nfo","Thumbs.db")
     #> Configuration
@@ -108,6 +108,7 @@ Try{
         }
         cleanup(){ #cleanup should be used after backup to check for orphans(files, psbak), deleted files, ...? it should be used with destination folders listed in $Destinations array
             #load information from .psbak
+
             $this.loadpsbak()
             #$fileproperties = Get-ItemProperty -LiteralPath $this.destinationpath
             $date = get-date
@@ -120,25 +121,27 @@ Try{
                 Write-Host "Warning! Orphan file found. This file has no .psbak file." $this.destinationpath
             }#>
 
-
-            if(!(Test-Path -LiteralPath $this.destinationpath)){
-                #destinationpath does NOT exist
-                Throw "While cleaning up destination file not found, this should not be possible and might be an error in the script. Aborting script."
-            }
-            if(!(Test-Path -LiteralPath ($this.sourcepath + ".psbak")) -and (Test-Path -LiteralPath $this.sourcepath)){
+            #if(!(Test-Path -LiteralPath $this.destinationpath)){
+             #   #destinationpath does NOT exist
+             #   Throw "While cleaning up: destination file not found, this should not be possible and might be an error in the script. Aborting script."
+            #}
+            if(!(Test-Path -LiteralPath ($this.sourcepath + ".psbak")) -and (Test-Path -LiteralPath $this.sourcepath) -and (!($this.destinationpath -eq "False"))){
                 #sourcepath psbak does not exist, but source file exists
                 Write-Host "Warning! Source psbak file does not exist, but source file exists. Either you added this file after starting this script, cleaned up before backing up or something went wrong." $this.sourcepath
                 $global:FilesWithWarnings.Add($this)
             }
-            if(!(Test-Path -LiteralPath ($this.destinationpath +".psbak"))){
-                #destinationpath psbak does NOT exist
-                Write-Host "Warning! Orphan file was found in destination. Probably because .psbak was manually deleted" $this.destinationpath
+            if($this.destinationpath -eq "False"){
+                Write-Host "Warning! Orphan file found without .psbak or could not read .psbak destinationpath (destinationpath is string False)" $this.sourcepath
                 $global:FilesWithWarnings.Add($this)
             }
+            #if(!(Test-Path -LiteralPath ($this.destinationpath +".psbak")) -and (!($this.destinatonpath -eq "False"))){ 
+            #    #destinationpath psbak does NOT exist
+            #    Write-Host "Warning! Orphan file was found in destination (no .psbak). Probably because .psbak was manually deleted during backup" $this.destinationpath
+            #    $global:FilesWithWarnings.Add($this)
+            #}
 
             if(!(Test-Path -LiteralPath $this.sourcepath)){
                 #sourcepath does NOT exist
-
                 if($this.deleteddatetime -ne 0){ #if deletedatetime is not 0. not 0 means it was detected before, 0 means deletion wasnt detected before
                     if(($date - $this.deleteddatetime).TotalDays -gt $global:FileRetentionDays){
                         #file expired retention days
@@ -175,8 +178,6 @@ Try{
             #Remove-Item -LiteralPath $this.destinationpath #temp for fast deletion
             #Remove-item -LiteralPath ($this.destinationpath + ".psbak")#temp for fast deletion
             }
-            
-            #check
         }
         #start the whole backup process for this file
         backup($destinations){
@@ -184,13 +185,21 @@ Try{
             $psbakext = ".psbak"
         
             $this.loadpsbak() #load information from .psbak file to actual file object
-            #check if previous backup attempt was aborted and .pslock file is still there
-            if(Test-Path -LiteralPath ($this.destinationpath + ".pslock")){
-                Write-Host ".pslock found, this means script was ungracefully closed. Deleting destination file and creating new backup"
-                Write-Host "Debug DELETING DESTINATIONPATH! Debug / uncomment next line #191"
-                #Remove-Item $this.destinationpath
-            }
 
+            #check if previous backup attempt was aborted during file copy and .pslock file is still there
+            if(Test-Path -LiteralPath ($this.sourcepath + ".pslock")){
+                Write-Host "Warning! .pslock found, this means script was ungracefully closed while copy-item was running." $this.sourcepath
+                $global:FilesWithWarnings.Add($this)
+                if(Test-Path $this.destinationpath){
+                    #File exists in destinationpath
+                    Write-Host "Deleting file in destionation because it is probably corrupted" $this.destinationpath
+                    Remove-Item -LiteralPath $this.destinationpath
+                }
+                else{ #file does not exist
+                    Write-Host "could not delete file in destination because it does not exist in destination" $this.sourcepath
+                }
+                Remove-Item -LiteralPath ($this.sourcepath + ".pslock")
+            }
 
             #create backup because $backedup is false and file does not exist in destinationpath
             if(($this.backedup -eq $false) -and (!(Test-Path -LiteralPath $this.destinationpath))){
@@ -238,7 +247,6 @@ Try{
                 if(($sourcehash -eq $destinationhash) -and ($sourcehash -eq $sourcepsbakhash) -and ($destinationhash -eq $sourcepsbakhash)){
                     #Write-Host $this.sourcepath "and" $this.destinationpath "hashes do match. no action required. overwriting .psbak because of hash date"
                     $this.hashdatetime = Get-Date
-                    Write-Host "debug"
                     $this | Export-Clixml -LiteralPath ($this.sourcepath + ".psbak")
                     $this | Export-Clixml -LiteralPath ($this.destinationpath + ".psbak")
                 }
@@ -358,15 +366,13 @@ Try{
                             }
                             $filenamecounter++
                         }
-                        #before copying create filename.pslock to make create a mark on FS that this file is now copying and not finished
-                        New-Item -ItemType File -Path ($this.destinationpath + ".pslock") -ErrorAction Stop #stop if file already exists
-                        Copy-Item -LiteralPath $this.sourcepath -Destination ($newdestination + "\" + $filename)
                         $this.destinationpath = ($newdestination + "\" + $filename)
+                        New-Item -ItemType File -Path ($this.sourcepath + ".pslock") -ErrorAction Stop
+                        Copy-Item -LiteralPath $this.sourcepath -Destination $this.destinationpath
+                        Remove-Item -LiteralPath ($this.sourcepath + ".pslock")
                         $this.backedup = $true
                         $this | Export-Clixml -LiteralPath ($this.sourcepath + ".psbak")
                         $this | Export-Clixml -LiteralPath ($this.destinationpath + ".psbak")
-                        #delete .pslock file beacsue backup is completed
-                        Remove-Item -Path ($this.destinationpath + ".pslock")
                     }
                     else{
                         #Write-Host $driveletter "Does not have enought space"
@@ -390,7 +396,7 @@ Try{
         addfiles($path){ #gets files from filesystem path and adds it to the object. If file has .psbak: information from .psbak is verified then added (verification does not include hash)
             Write-Host "Adding files to library, this may take some time." $path
             $filesarray = @()
-            $files = Get-Childitem -Recurse -Path $path -File -Exclude *.psbak,Thumbs.db
+            $files = Get-Childitem -Recurse -Path $path -File -Exclude *.psbak,Thumbs.db,*.pslock
             ForEach($file in $files){
                 $this.filearray += [File]::new($file.FullName,$false,$false,$null,$null,0,0)            
             }
