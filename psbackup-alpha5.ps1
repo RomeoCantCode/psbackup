@@ -176,7 +176,7 @@ Try{
             #Remove-item -LiteralPath ($this.destinationpath + ".psbak")#temp for fast deletion
             }
             
-            
+            #check
         }
         #start the whole backup process for this file
         backup($destinations){
@@ -184,6 +184,13 @@ Try{
             $psbakext = ".psbak"
         
             $this.loadpsbak() #load information from .psbak file to actual file object
+            #check if previous backup attempt was aborted and .pslock file is still there
+            if(Test-Path -LiteralPath ($this.destinationpath + ".pslock")){
+                Write-Host ".pslock found, this means script was ungracefully closed. Deleting destination file and creating new backup"
+                Write-Host "Debug DELETING DESTINATIONPATH! Debug / uncomment next line #191"
+                #Remove-Item $this.destinationpath
+            }
+
 
             #create backup because $backedup is false and file does not exist in destinationpath
             if(($this.backedup -eq $false) -and (!(Test-Path -LiteralPath $this.destinationpath))){
@@ -229,7 +236,11 @@ Try{
                 $destinationhash = (Get-Filehash -Algorithm $global:Algorithm -Path $this.destinationpath).hash
                 $sourcepsbakhash = $this.hash
                 if(($sourcehash -eq $destinationhash) -and ($sourcehash -eq $sourcepsbakhash) -and ($destinationhash -eq $sourcepsbakhash)){
-                    #Write-Host $this.sourcepath "and" $this.destinationpath "hashes do match. no action required"
+                    #Write-Host $this.sourcepath "and" $this.destinationpath "hashes do match. no action required. overwriting .psbak because of hash date"
+                    $this.hashdatetime = Get-Date
+                    Write-Host "debug"
+                    $this | Export-Clixml -LiteralPath ($this.sourcepath + ".psbak")
+                    $this | Export-Clixml -LiteralPath ($this.destinationpath + ".psbak")
                 }
                 else{
                     Write-Host $this.sourcepath "or" $this.destinationpath "Warning! hash compare ERROR! manual action required! Hashes did not match" 
@@ -347,11 +358,15 @@ Try{
                             }
                             $filenamecounter++
                         }
+                        #before copying create filename.pslock to make create a mark on FS that this file is now copying and not finished
+                        New-Item -ItemType File -Path ($this.destinationpath + ".pslock") -ErrorAction Stop #stop if file already exists
                         Copy-Item -LiteralPath $this.sourcepath -Destination ($newdestination + "\" + $filename)
                         $this.destinationpath = ($newdestination + "\" + $filename)
                         $this.backedup = $true
                         $this | Export-Clixml -LiteralPath ($this.sourcepath + ".psbak")
                         $this | Export-Clixml -LiteralPath ($this.destinationpath + ".psbak")
+                        #delete .pslock file beacsue backup is completed
+                        Remove-Item -Path ($this.destinationpath + ".pslock")
                     }
                     else{
                         #Write-Host $driveletter "Does not have enought space"
