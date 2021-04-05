@@ -11,12 +11,6 @@ Disadvantages: Inefficient when having a lot of tiny files (Uses lots of RAM >2M
 Not recommended for: a lot of files (>1M), a lot of tiny files or folders with a lot of changes (eg >20 user working on files).
 Please dont forget to do a proper backup to a different site (geo redundant), in case of fire/water/atomic war?/... 
 
-Add property to file object "backupflag" which will be set to 0 whenever a file copy is started and set to 1 when file copy is over. When the file copy gets interrupted, it causes the files to get corrupt (you cant see any difference in file explorer).
-
-Cleanup Summary: DST Orphan Files / PSBak, 
-
-Add report to manually check about deleted files (retention is OK but you might not notice after a long period of time).
-
 Add multithreading for better cpu usage https://adamtheautomator.com/powershell-multithreading/
 
 MT goals: copy to different destinations / from different sources at same time. Calculate hashes at same time. get-childitem from differente src/dst at same time.
@@ -68,7 +62,7 @@ Try{
     #$global:TotalFilesSourceMB = 0 #TBD same as above but in MB
     #$global:TotalFilesDestinationMB = 0 # TBD same as above but in MB
     $global:FilesWithWarnings = @() #files which were given a warning (various reasons, usually then when console would write warning)
-    $global:FilesWithWarnings = {$global:FilesWithWarnings}.invoke()
+    $global:FilesWithWarnings = {$global:FilesWithWarnings}.invoke() #convert array to collection
 
     $cApplicationName = "psbackup-alpha5"
     $global:ScriptStartDate = get-date
@@ -83,7 +77,7 @@ Try{
         New-Item -ItemType Folder -Path $global:ProgramDataFolder
         Write-Host "Folder created at" $global:ProgramDataFolder
     }
-    Start-Transcript -Append -Path ($global:ProgramDataFolder+$global:LogDir+"\psbackup.log") 
+    Start-Transcript -Append -Path ($global:ProgramDataFolder+$global:LogDir+"\psbackup.log"+$global:ScriptStartDate.Day+"-"+$global:ScriptStartDate.Month+"-"+$global:ScriptStartDate.Year+"."+$global:ScriptStartDate.Hour+"-"+$global:ScriptStartDate.Minute+"-"+$global:ScriptStartDate.Second) 
     $currentprocess = Get-Process -Id $pid
     $currentprocess.PriorityClass = $global:ProcessPriority
     #>
@@ -190,7 +184,7 @@ Try{
             if(Test-Path -LiteralPath ($this.sourcepath + ".pslock")){
                 Write-Host "Warning! .pslock found, this means script was ungracefully closed while copy-item was running." $this.sourcepath
                 $global:FilesWithWarnings.Add($this)
-                if(Test-Path $this.destinationpath){ #=> #######PROBLEM! if file was not copied successfully it doesnt safe destinatonpath
+                if(Test-Path $this.destinationpath){ 
                     #File exists in destinationpath
                     Write-Host "Deleting file in destionation because it is probably corrupted" $this.destinationpath
                     Remove-Item -LiteralPath $this.destinationpath
