@@ -190,13 +190,13 @@ Try{
             if(Test-Path -LiteralPath ($this.sourcepath + ".pslock")){
                 Write-Host "Warning! .pslock found, this means script was ungracefully closed while copy-item was running." $this.sourcepath
                 $global:FilesWithWarnings.Add($this)
-                if(Test-Path $this.destinationpath){
+                if(Test-Path $this.destinationpath){ #=> #######PROBLEM! if file was not copied successfully it doesnt safe destinatonpath
                     #File exists in destinationpath
                     Write-Host "Deleting file in destionation because it is probably corrupted" $this.destinationpath
                     Remove-Item -LiteralPath $this.destinationpath
                 }
-                else{ #file does not exist
-                    Write-Host "could not delete file in destination because it does not exist in destination" $this.sourcepath
+                else{ #file does not exist 
+                    Write-Host "could not delete file $this.sourcepath in destination because it does not exist in destination:" $this.destinationpath
                 }
                 Remove-Item -LiteralPath ($this.sourcepath + ".pslock")
             }
@@ -368,6 +368,8 @@ Try{
                         }
                         $this.destinationpath = ($newdestination + "\" + $filename)
                         New-Item -ItemType File -Path ($this.sourcepath + ".pslock") -ErrorAction Stop
+                        $this | Export-Clixml -LiteralPath ($this.sourcepath + ".psbak")
+                        $this | Export-Clixml -LiteralPath ($this.destinationpath + ".psbak")
                         Copy-Item -LiteralPath $this.sourcepath -Destination $this.destinationpath
                         Remove-Item -LiteralPath ($this.sourcepath + ".pslock")
                         $this.backedup = $true
@@ -471,7 +473,7 @@ Finally{
     if ($global:NewHashFiles.Count -gt 0){
         Write-Host "New hashes calculated:" $global:NewHashFiles.Count
         Write-Host "---------------------"
-        $global:NewHashFiles
+        #$global:NewHashFiles
         Write-Host "######################"
     }        
     
@@ -494,7 +496,7 @@ Finally{
     if ($global:FilesWithWarnings.Count -gt 0){
         Write-Host "Files with warnings" $global:FilesWithWarnings.Count
         Write-Host "---------------------"
-        $global:FilesWithWarnings
+        #$global:FilesWithWarnings
         Write-Host "######################"
     }
     
